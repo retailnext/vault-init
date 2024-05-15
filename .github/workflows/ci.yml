@@ -1,0 +1,81 @@
+---
+name: CI
+on:
+  pull_request:
+    branches:
+      - main
+env:
+  # renovate: datasource=github-releases depName=golangci/golangci-lint versioning=semver-coerced
+  GOLANGCI_LINT_VERSION: "v1.59.0"
+  IMAGE_NAME: "${{ github.repository }}"
+  TAG: "ghcr.io/${{ github.repository }}:latest"
+  TEST_PARAMS: "--vault-addr localhost:1234 --initout file:/secret_out.txt --dry-run"
+  REGISTRY: "ghcr.io"
+jobs:
+  go:
+    name: Go
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # v4
+      - name: Set up Go
+        uses: actions/setup-go@cdcb36043654635271a94b9a6d1392de5bb323a7 # v5
+        with:
+          go-version-file: 'go.mod'
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@23faadfdeb23a6f9e511beaba149bb123b5b145a # v6
+        with:
+          version: ${{ env.GOLANGCI_LINT_VERSION }}
+          args: --timeout=10m
+      - name: go test
+        run: |
+          go test -v ./...
+      - name: run vault-init
+        run: |
+          go build -o vault-init .
+          ./vault-init ${{ env.TEST_PARAMS }}
+  docker:
+    name: Docker Build vault-init
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@d70bba72b1f3fd22344832f00baa16ece964efeb # v3
+      - name: Log in to the Container registry
+        if: ${{ github.ref == 'refs/heads/main' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build test image
+        uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0 # v5
+        with:
+          context: .
+          push: false
+          load: true
+          tags: ${{ env.TAG }}
+          cache-from: type=gha
+      - name: Test image
+        run: |
+          docker run --rm ${{ env.TAG }} ${{ env.TEST_PARAMS }}
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=pr
+            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'main') }}
+      - name: Build images
+        uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0 # v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.ref == 'refs/heads/main' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
