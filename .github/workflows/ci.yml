@@ -4,6 +4,9 @@ on:
   pull_request:
     branches:
       - main
+  push:
+    branches:
+      - main
 env:
   # renovate: datasource=github-releases depName=golangci/golangci-lint versioning=semver-coerced
   GOLANGCI_LINT_VERSION: "v1.59.0"
