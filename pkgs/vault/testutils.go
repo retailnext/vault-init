@@ -32,8 +32,8 @@ func (v *VaultServer) Execute(ctx context.Context, command string) ([]byte, erro
 }
 
 func StartTestDevVaultInTest(t *testing.T, ctx context.Context) (vserver *VaultServer, vclient *Vault, err error) {
-	vaultDevContainer, err := testvault.RunContainer(ctx,
-		testcontainers.WithImage("hashicorp/vault:1.13.0"),
+	vaultDevContainer, err := testvault.Run(ctx,
+		"hashicorp/vault:1.13.0",
 		testvault.WithToken(VAULT_TOKEN),
 		testcontainers.WithWaitStrategy(
 			wait.ForLog(fmt.Sprintf("Root Token: %s", VAULT_TOKEN)).WithOccurrence(1).WithStartupTimeout(10*time.Second),
