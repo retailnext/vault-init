@@ -108,7 +108,7 @@ require (
 require (
 	cloud.google.com/go/secretmanager v1.14.1
 	github.com/aws/aws-sdk-go-v2/config v1.27.34
-	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.32.8
+	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.32.9
 	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
 	github.com/hashicorp/vault/api v1.15.0
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
