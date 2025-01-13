@@ -8,7 +8,7 @@ COPY *.go ./
 COPY pkgs ./pkgs
 RUN CGO_ENABLED=0 GOOS=linux go build -o /vault-init -trimpath .
 
-FROM gcr.io/distroless/base:latest@sha256:e9d0321de8927f69ce20e39bfc061343cce395996dfc1f0db6540e5145bc63a5
+FROM gcr.io/distroless/base:latest@sha256:74ddbf52d93fafbdd21b399271b0b4aac1babf8fa98cab59e5692e01169a1348
 WORKDIR /
 COPY --from=builder /vault-init /vault-init
 ENTRYPOINT ["/vault-init"]
