@@ -12,7 +12,7 @@ import (
 	"github.com/retailnext/vault-init/pkgs/gcp"
 	"github.com/retailnext/vault-init/pkgs/objects"
 	"github.com/retailnext/vault-init/pkgs/vault"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 	"gopkg.in/yaml.v3"
 )
 
