@@ -61,7 +61,7 @@ require (
 	github.com/hashicorp/go-secure-stdlib/parseutil v0.1.8 // indirect
 	github.com/hashicorp/go-secure-stdlib/strutil v0.1.2 // indirect
 	github.com/hashicorp/go-sockaddr v1.0.6 // indirect
-	github.com/hashicorp/hcl v1.0.0 // indirect
+	github.com/hashicorp/hcl v1.0.1-vault-7 // indirect
 	github.com/klauspost/compress v1.17.9 // indirect
 	github.com/lufia/plan9stats v0.0.0-20240513124658-fba389f38bae // indirect
 	github.com/magiconair/properties v1.8.10 // indirect
@@ -111,7 +111,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.29.14
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.35.4
 	github.com/cpuguy83/go-md2man/v2 v2.0.5 // indirect
-	github.com/hashicorp/vault/api v1.16.0
+	github.com/hashicorp/vault/api v1.20.0
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
 )
