@@ -10,7 +10,7 @@ import (
 	"github.com/retailnext/vault-init/pkgs/aws"
 	"github.com/retailnext/vault-init/pkgs/gcp"
 	"github.com/retailnext/vault-init/pkgs/retry"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 const (

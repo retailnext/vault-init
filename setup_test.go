@@ -9,7 +9,7 @@ import (
 	"github.com/retailnext/vault-init/pkgs/objects"
 	"github.com/retailnext/vault-init/pkgs/vault"
 	"github.com/stretchr/testify/assert"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func TestInitVault(t *testing.T) {
