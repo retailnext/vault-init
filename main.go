@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"os"
@@ -10,7 +11,7 @@ import (
 	"github.com/retailnext/vault-init/pkgs/aws"
 	"github.com/retailnext/vault-init/pkgs/gcp"
 	"github.com/retailnext/vault-init/pkgs/retry"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 const (
@@ -20,62 +21,36 @@ const (
 )
 
 func main() {
-	App := &cli.App{
-		Name:  "vault-init",
-		Usage: "Initialize vault",
-		Flags: []cli.Flag{
-			&cli.StringFlag{Name: "vault-addr", Usage: "Vault address", EnvVars: []string{"VAULT_ADDR"}, Required: true},
-			&cli.StringFlag{Name: "cacert", Usage: "CA cert for vault server", EnvVars: []string{"VAULT_CA"}, Required: false},
-			&cli.StringFlag{
-				Name:     "initout",
-				Usage:    "Output destination for the output of vault init",
-				EnvVars:  []string{"VAULT_OUT"},
-				Required: true,
-			},
-			&cli.StringFlag{
-				Name:     "post-init",
-				Usage:    "Instruction on what to do after vault init",
-				EnvVars:  []string{"POST_INIT"},
-				Required: false,
-			},
-			&cli.BoolFlag{
-				Name:     "dry-run",
-				Usage:    "Dry run to check the input",
-				Required: false,
-			},
-		},
-		Before: validateFlag,
-		Action: retryInitVault,
-	}
-	if err := App.Run(os.Args); err != nil {
+	App := getVaultInitCliCmd(validateFlag, retryInitVault)
+	if err := App.Run(context.Background(), os.Args); err != nil {
 		slog.Error(err.Error())
 		os.Exit(1)
 	}
 }
 
-func validateFlag(cCtx *cli.Context) (err error) {
+func validateFlag(ctx context.Context, cmd *cli.Command) (context.Context, error) {
 	// Action in cli.StringFlag occurs AFTER beforeAPP so it is not useful
 
 	// Check initout
-	if initOutPathType(cCtx.String("initout")) == "" {
-		return fmt.Errorf("unrecognizable initout path: %s does not match of the known types", cCtx.String("initout"))
+	if initOutPathType(cmd.StringArg("initout")) == "" {
+		return ctx, fmt.Errorf("unrecognizable initout path: %s does not match of the known types", cmd.StringArg("initout"))
 	}
 
-	return err
+	return ctx, nil
 }
 
-func retryInitVault(cCtx *cli.Context) error {
-	clients, err := SetupClients(cCtx)
+func retryInitVault(ctx context.Context, cmd *cli.Command) error {
+	clients, err := SetupClients(ctx, cmd)
 	if err != nil {
 		return err
 	}
-	if cCtx.String("post-init") != "" {
-		err = clients.SetupPostTasks([]byte(cCtx.String("post-init")))
+	if cmd.StringArg("post-init") != "" {
+		err = clients.SetupPostTasks([]byte(cmd.StringArg("post-init")))
 		if err != nil {
 			return err
 		}
 	}
-	if cCtx.Bool("dry-run") {
+	if cmd.Bool("dry-run") {
 		fmt.Println("All the clients can be created")
 		return nil
 	}
@@ -110,4 +85,34 @@ func initOutPathType(path string) string {
 	}
 
 	return ""
+}
+
+func getVaultInitCliCmd(beforeFunc cli.BeforeFunc, actionFunc cli.ActionFunc) *cli.Command {
+	return &cli.Command{
+		Name:  "vault-init",
+		Usage: "Initialize vault",
+		Flags: []cli.Flag{
+			&cli.StringFlag{Name: "vault-addr", Usage: "Vault address", Sources: cli.EnvVars("VAULT_ADDR"), Required: true},
+			&cli.StringFlag{Name: "cacert", Usage: "CA cert for vault server", Sources: cli.EnvVars("VAULT_CA"), Required: false},
+			&cli.StringFlag{
+				Name:     "initout",
+				Usage:    "Output destination for the output of vault init",
+				Sources:  cli.EnvVars("VAULT_OUT"),
+				Required: true,
+			},
+			&cli.StringFlag{
+				Name:     "post-init",
+				Usage:    "Instruction on what to do after vault init",
+				Sources:  cli.EnvVars("POST_INIT"),
+				Required: false,
+			},
+			&cli.BoolFlag{
+				Name:     "dry-run",
+				Usage:    "Dry run to check the input",
+				Required: false,
+			},
+		},
+		Before: beforeFunc,
+		Action: actionFunc,
+	}
 }

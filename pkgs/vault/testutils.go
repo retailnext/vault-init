@@ -45,7 +45,7 @@ func StartTestDevVaultInTest(t *testing.T, ctx context.Context) (vserver *VaultS
 
 	vserver = &VaultServer{vaultDevContainer}
 	t.Cleanup(func() {
-		if err := vserver.Terminate(ctx); err != nil {
+		if err := testcontainers.TerminateContainer(vaultDevContainer); err != nil {
 			t.Fatalf("failed to terminate the vault container: %s", err)
 		}
 	})

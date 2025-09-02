@@ -125,7 +125,11 @@ func (v *Vault) GetAuthRole(authPath string, roleName string) (authRole AuthRole
 		return authRole, err
 	}
 
-	defer resp.Body.Close()
+	defer func() {
+		if tmpErr := resp.Body.Close(); tmpErr != nil && err == nil {
+			err = tmpErr
+		}
+	}()
 
 	authRoleResp := &AuthRoleResp{}
 	err = json.NewDecoder(resp.Body).Decode(authRoleResp)
@@ -161,7 +165,11 @@ func (v *Vault) GetRawAuthRole(authMethod, roleName string) (authRole map[string
 		return authRole, err
 	}
 
-	defer resp.Body.Close()
+	defer func() {
+		if tmpErr := resp.Body.Close(); tmpErr != nil && err == nil {
+			err = tmpErr
+		}
+	}()
 
 	msgData := &GeneralResp{}
 	err = json.NewDecoder(resp.Body).Decode(msgData)
