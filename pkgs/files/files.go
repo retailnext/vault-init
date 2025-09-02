@@ -33,7 +33,11 @@ func (s *LocalFile) AddVersion(filePath string, content []byte) (fileFullPath st
 	if err != nil {
 		return
 	}
-	defer fileout.Close()
+	defer func() {
+		if tmpErr := fileout.Close(); tmpErr != nil && err == nil {
+			err = tmpErr
+		}
+	}()
 	_, err = fileout.Write(content)
 
 	return

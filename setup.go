@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -12,7 +13,7 @@ import (
 	"github.com/retailnext/vault-init/pkgs/gcp"
 	"github.com/retailnext/vault-init/pkgs/objects"
 	"github.com/retailnext/vault-init/pkgs/vault"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 	"gopkg.in/yaml.v3"
 )
 
@@ -26,45 +27,45 @@ type RawPostTask struct {
 	TaskContent map[string]interface{} `yaml:"task"`
 }
 
-func SetupClients(cCtx *cli.Context) (mainClients *MainClients, err error) {
+func SetupClients(ctx context.Context, cmd *cli.Command) (mainClients *MainClients, err error) {
 	// get clients
 	var vaultClient *vault.Vault
 	var ssmClient objects.SSMClient
 	var initOutSecret string
 
-	vaultClient, err = vault.NewClientWithContext(cCtx.Context, cCtx.String("vault-addr"), []byte(cCtx.String("cacert")))
+	vaultClient, err = vault.NewClientWithContext(ctx, cmd.String("vault-addr"), []byte(cmd.String("cacert")))
 	if err != nil {
 		return
 	}
-	switch initOutType := initOutPathType(cCtx.String("initout")); initOutType {
+	switch initOutType := initOutPathType(cmd.String("initout")); initOutType {
 	case "gcp":
-		ssmClient, err = gcp.NewSecretClient(cCtx.Context)
+		ssmClient, err = gcp.NewSecretClient(ctx)
 		if err != nil {
 			return mainClients, err
 		}
-		initOutSecret = cCtx.String("initout")
+		initOutSecret = cmd.String("initout")
 	case "aws":
 		var name, region string
-		name, _, region, err = aws.ParseSecretArn(cCtx.String("initout"))
+		name, _, region, err = aws.ParseSecretArn(cmd.String("initout"))
 		if err != nil {
 			return mainClients, err
 		}
-		ssmClient, err = aws.NewSecretClient(cCtx.Context, region)
+		ssmClient, err = aws.NewSecretClient(ctx, region)
 		if err != nil {
 			return mainClients, err
 		}
 		initOutSecret = name
 	case "file":
-		ssmClient, err = files.NewLocalFileClient(cCtx.Context)
+		ssmClient, err = files.NewLocalFileClient(ctx)
 		if err != nil {
 			return mainClients, err
 		}
-		initOutSecret, err = filepath.Abs(cCtx.String("initout"))
+		initOutSecret, err = filepath.Abs(cmd.String("initout"))
 		if err != nil {
 			return mainClients, err
 		}
 	default:
-		return mainClients, fmt.Errorf("%s is %s type, which is invalid", cCtx.String("initout"), initOutType)
+		return mainClients, fmt.Errorf("%s is %s type, which is invalid", cmd.String("initout"), initOutType)
 	}
 
 	objectClients := &objects.Clients{

@@ -2,14 +2,13 @@ package main
 
 import (
 	"context"
-	"flag"
 	"os"
 	"testing"
 
 	"github.com/retailnext/vault-init/pkgs/objects"
 	"github.com/retailnext/vault-init/pkgs/vault"
 	"github.com/stretchr/testify/assert"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func TestInitVault(t *testing.T) {
@@ -20,7 +19,12 @@ func TestInitVault(t *testing.T) {
 	if err := os.WriteFile(initoutFile, []byte(initOut), 0666); err != nil {
 		t.Fatal(err)
 	}
-	defer os.Remove(initoutFile)
+
+	defer func() {
+		if err := os.Remove(initoutFile); err != nil {
+			t.Fatal(err)
+		}
+	}()
 
 	ctx := context.Background()
 	vserver, _, err := vault.StartTestDevVaultInTest(t, ctx)
@@ -33,12 +37,15 @@ func TestInitVault(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	set := flag.NewFlagSet("test", 0)
-	set.String("vault-addr", vaultAddr, "doc")
-	set.String("initout", initoutFile, "doc")
-	cliCtx := cli.NewContext(nil, set, nil)
-	mainClients, err := SetupClients(cliCtx)
-	if err != nil {
+	var mainClients *MainClients
+	action := func(ctx context.Context, cmd *cli.Command) error {
+		var err error
+		mainClients, err = SetupClients(context.Background(), cmd)
+		return err
+	}
+
+	cmd := getVaultInitCliCmd(nil, action)
+	if err := cmd.Run(context.Background(), []string{"vault-init", "--vault-addr", vaultAddr, "--initout", initoutFile}); err != nil {
 		t.Fatal(err)
 	}
 
