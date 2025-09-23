@@ -110,6 +110,6 @@ require (
 require (
 	cloud.google.com/go/secretmanager v1.15.0
 	github.com/aws/aws-sdk-go-v2/config v1.31.10
-	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.39.4
+	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.39.5
 	github.com/hashicorp/vault/api v1.21.0
 )
