@@ -113,6 +113,13 @@ func (c *MainClients) SetupPostTasks(taskContent []byte) (err error) {
 				return err
 			}
 			c.PostTasks = append(c.PostTasks, postTask)
+		case "gcp_auth":
+			postTask := &objects.GCPAuthTask{}
+			err = postTask.Set(c.Clients, subTaskContent)
+			if err != nil {
+				return err
+			}
+			c.PostTasks = append(c.PostTasks, postTask)
 		default:
 			return fmt.Errorf("%s is not valid task type", rawTask.TaskType)
 		}
