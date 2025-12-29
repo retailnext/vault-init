@@ -32,3 +32,17 @@
       bound_claim_sub: "organization:my-org-name:project:my-project-name:workspace:my-workspace-name:run_phase:*"
       user_claim: terraform_full_workspace
       ttl: 20m
+- type: gcp_auth
+  task:
+    auth_path: gcp
+    role_bound:
+    - role_name: tf-apply
+      service_accounts:
+      - "rn-gke-vault-acl-tf-apply@rn-sbx-202307-5d3b.iam.gserviceaccount.com"
+      policy_names:
+      - admin
+    - role_name: tf-plan
+      service_accounts:
+      - "rn-gke-vault-acl-tf-plan@rn-sbx-202307-5d3b.iam.gserviceaccount.com"
+      policy_names:
+      - reader

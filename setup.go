@@ -213,6 +213,7 @@ func (c *MainClients) CheckHealthVault() error {
 }
 
 func (c *MainClients) ExecutePostTasks() error {
+	slog.Info("run_post_init_tasks", "num_tasks", len(c.PostTasks))
 	for _, postTask := range c.PostTasks {
 		if err := postTask.Do(); err != nil {
 			return err

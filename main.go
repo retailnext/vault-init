@@ -44,12 +44,29 @@ func retryInitVault(ctx context.Context, cmd *cli.Command) error {
 	if err != nil {
 		return err
 	}
-	if cmd.StringArg("post-init") != "" {
-		err = clients.SetupPostTasks([]byte(cmd.StringArg("post-init")))
+	postTaskContent := []byte{}
+	if cmd.String("post-init") != "" {
+		// get post tasks by string
+		postTaskContent = []byte(cmd.String("post-init"))
+	} else if cmd.String("post-init-file") != "" {
+		// get post tasks by file
+		absPath, err := filepath.Abs(cmd.String("post-init-file"))
+		if err != nil {
+			return err
+		}
+		postTaskContent, err = os.ReadFile(absPath)
 		if err != nil {
 			return err
 		}
 	}
+
+	if len(postTaskContent) > 0 {
+		err = clients.SetupPostTasks(postTaskContent)
+		if err != nil {
+			return err
+		}
+	}
+
 	if cmd.Bool("dry-run") {
 		fmt.Println("All the clients can be created")
 		return nil
@@ -92,8 +109,17 @@ func getVaultInitCliCmd(beforeFunc cli.BeforeFunc, actionFunc cli.ActionFunc) *c
 		Name:  "vault-init",
 		Usage: "Initialize vault",
 		Flags: []cli.Flag{
-			&cli.StringFlag{Name: "vault-addr", Usage: "Vault address", Sources: cli.EnvVars("VAULT_ADDR"), Required: true},
-			&cli.StringFlag{Name: "cacert", Usage: "CA cert for vault server", Sources: cli.EnvVars("VAULT_CA"), Required: false},
+			&cli.StringFlag{
+				Name:     "vault-addr",
+				Usage:    "Vault address",
+				Sources:  cli.EnvVars("VAULT_ADDR"),
+				Required: true,
+			},
+			&cli.StringFlag{
+				Name:    "cacert",
+				Usage:   "CA cert for vault server",
+				Sources: cli.EnvVars("VAULT_CA"),
+			},
 			&cli.StringFlag{
 				Name:     "initout",
 				Usage:    "Output destination for the output of vault init",
@@ -101,10 +127,13 @@ func getVaultInitCliCmd(beforeFunc cli.BeforeFunc, actionFunc cli.ActionFunc) *c
 				Required: true,
 			},
 			&cli.StringFlag{
-				Name:     "post-init",
-				Usage:    "Instruction on what to do after vault init",
-				Sources:  cli.EnvVars("POST_INIT"),
-				Required: false,
+				Name:    "post-init",
+				Usage:   "Instruction on what to do after vault init",
+				Sources: cli.EnvVars("POST_INIT"),
+			},
+			&cli.StringFlag{
+				Name:  "post-init-file",
+				Usage: "Instruction on what to do after vault init in file",
 			},
 			&cli.BoolFlag{
 				Name:     "dry-run",
