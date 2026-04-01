@@ -1,0 +1,12 @@
+CREATE ROLE IF NOT EXISTS 'vaultuser' WITH SUPERUSER = false AND LOGIN = true AND PASSWORD = '{{ vaultpass }}';
+GRANT CREATE ON ALL ROLES to 'vaultuser';
+GRANT ALTER ON ALL ROLES to 'vaultuser';
+GRANT DROP ON ALL ROLES to 'vaultuser';
+GRANT AUTHORIZE ON ALL ROLES to 'vaultuser';
+
+CREATE ROLE IF NOT EXISTS 'tf_acl_user' WITH SUPERUSER = false AND LOGIN = false;
+GRANT CREATE ON ALL ROLES TO 'tf_acl_user';
+GRANT ALTER  ON ALL ROLES TO 'tf_acl_user';
+GRANT DROP   ON ALL ROLES TO 'tf_acl_user';
+GRANT AUTHORIZE ON ALL ROLES TO 'tf_acl_user';
+GRANT AUTHORIZE ON ALL KEYSPACES TO 'tf_acl_user';
