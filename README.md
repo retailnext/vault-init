@@ -9,12 +9,13 @@ NOT handle unseal process and it assumes that auto unseal is
 implemented already (usually through KMS).**
 After the intialization, with the initial root token, `vault-init` 
 can perform the following tasks:
- - Set up policies; in order for the authentication to work properly,
-  policies need to be set. Typically, `admin` policy can be set
-  through this task.
- - Set up `jwt` type auth for oidc; oidc configuration and the initial
+- Run a `policy` task to set up vault policies; in order for the authentication to work properly,
+  policies need to be set. Typically, `admin` policy can be set through this task.
+- Run a `oidc_auth` task to set up `jwt` type auth for oidc; oidc configuration and the initial
   role can be set up. Typically, `admin` role is set up with the policy
   created in the previous "policy task". For example, the role of
   terraform agent and workspace for vault ACL can be set up through
   this task. Refer to https://developer.hashicorp.com/terraform/cloud-docs/workspaces/dynamic-provider-credentials/vault-configuration for details
-- Set up `gcp` type auth; refer to https://developer.hashicorp.com/vault/docs/auth/gcp
+- Run a `gcp_auth` task to set up `gcp` type auth; refer to https://developer.hashicorp.com/vault/docs/auth/gcp
+- Run a `secret_sync` task to create a Vault KV v2 secret mount and sync secrets from the configured
+  secret backend (GCP Secret Manager, AWS Secrets Manager, or a file source) into vault
