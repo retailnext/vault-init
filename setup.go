@@ -98,31 +98,25 @@ func (c *MainClients) SetupPostTasks(taskContent []byte) (err error) {
 			return err
 		}
 
+		var postTask objects.Task
 		switch rawTask.TaskType {
 		case "policy":
-			postTask := &objects.PolicyTask{}
-			err = postTask.Set(c.Clients, subTaskContent)
-			if err != nil {
-				return err
-			}
-			c.PostTasks = append(c.PostTasks, postTask)
+			postTask = &objects.PolicyTask{}
 		case "oidc_auth":
-			postTask := &objects.OIDCAuthTask{}
-			err = postTask.Set(c.Clients, subTaskContent)
-			if err != nil {
-				return err
-			}
-			c.PostTasks = append(c.PostTasks, postTask)
+			postTask = &objects.OIDCAuthTask{}
 		case "gcp_auth":
-			postTask := &objects.GCPAuthTask{}
-			err = postTask.Set(c.Clients, subTaskContent)
-			if err != nil {
-				return err
-			}
-			c.PostTasks = append(c.PostTasks, postTask)
+			postTask = &objects.GCPAuthTask{}
+		case "secret_sync":
+			postTask = &objects.SecretSyncTask{}
 		default:
 			return fmt.Errorf("%s is not valid task type", rawTask.TaskType)
 		}
+
+		err = postTask.Set(c.Clients, subTaskContent)
+		if err != nil {
+			return err
+		}
+		c.PostTasks = append(c.PostTasks, postTask)
 	}
 
 	return err

@@ -2,11 +2,30 @@ package objects
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/retailnext/vault-init/pkgs/vault"
 	"github.com/stretchr/testify/assert"
 )
+
+// mockSSMClient implements SSMClient for testing.
+type mockSSMClient struct {
+	secrets map[string][]byte
+}
+
+func (m *mockSSMClient) GetValue(path string) ([]byte, error) {
+	v, ok := m.secrets[path]
+	if !ok {
+		return nil, fmt.Errorf("secret not found: %s", path)
+	}
+	return v, nil
+}
+
+func (m *mockSSMClient) AddVersion(path string, value []byte) (string, error) {
+	m.secrets[path] = value
+	return "1", nil
+}
 
 func TestOIDCAuthTask(t *testing.T) {
 	oidcTaskContent := `auth_path: jwt
@@ -75,4 +94,112 @@ role:
 	}
 
 	assert.Equal(t, expectedJwtAuthRole, actualJwtAuthRole)
+}
+
+func TestSecretSyncTask_Set(t *testing.T) {
+	taskContent := `mount_path: secret
+kv_secret:
+  - name: mykey
+    secret_path: /ssm/mykey
+`
+	ctx := context.Background()
+	_, vclient, err := vault.StartTestDevVaultInTest(t, ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	clients := &Clients{
+		VaultClient: vclient,
+		SSMClient:   &mockSSMClient{},
+	}
+
+	task := &SecretSyncTask{}
+	err = task.Set(clients, []byte(taskContent))
+	assert.NoError(t, err)
+	assert.Equal(t, "secret", task.MountPath)
+	assert.Len(t, task.KVSecret, 1)
+	assert.Equal(t, "mykey", task.KVSecret[0].Name)
+	assert.Equal(t, "/ssm/mykey", task.KVSecret[0].SecretPath)
+}
+
+func TestSecretSyncTask_Set_NoVaultClient(t *testing.T) {
+	task := &SecretSyncTask{}
+	clients := &Clients{SSMClient: &mockSSMClient{}}
+	err := task.Set(clients, []byte("mount_path: secret\n"))
+	assert.ErrorContains(t, err, "vault client is not initialized")
+}
+
+func TestSecretSyncTask_Set_NoSSMClient(t *testing.T) {
+	ctx := context.Background()
+	_, vclient, err := vault.StartTestDevVaultInTest(t, ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	task := &SecretSyncTask{}
+	clients := &Clients{VaultClient: vclient}
+	err = task.Set(clients, []byte("mount_path: secret\n"))
+	assert.ErrorContains(t, err, "ssm client is not initialized")
+}
+
+func TestSecretSyncTask_Do(t *testing.T) {
+	taskContent := `mount_path: secret
+kv_secret:
+  - name: mykey
+    secret_path: /ssm/mykey
+  - name: anotherkey
+    secret_path: /ssm/anotherkey
+`
+	ctx := context.Background()
+	_, vclient, err := vault.StartTestDevVaultInTest(t, ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	clients := &Clients{
+		VaultClient: vclient,
+		SSMClient: &mockSSMClient{
+			secrets: map[string][]byte{
+				"/ssm/mykey":      []byte("myvalue"),
+				"/ssm/anotherkey": []byte("anothervalue"),
+			},
+		},
+	}
+
+	task := &SecretSyncTask{}
+	if err = task.Set(clients, []byte(taskContent)); err != nil {
+		t.Fatal(err)
+	}
+	err = task.Do()
+	assert.NoError(t, err)
+
+	for _, tc := range []struct{ name, want string }{
+		{"mykey", "myvalue"},
+		{"anotherkey", "anothervalue"},
+	} {
+		got, err := vclient.ReadSecret("secret", tc.name)
+		assert.NoError(t, err)
+		assert.Equal(t, tc.want, got)
+	}
+}
+
+func TestSecretSyncTask_Do_SSMError(t *testing.T) {
+	taskContent := `mount_path: secret
+kv_secret:
+  - name: mykey
+    secret_path: /ssm/missing
+`
+	ctx := context.Background()
+	_, vclient, err := vault.StartTestDevVaultInTest(t, ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	clients := &Clients{
+		VaultClient: vclient,
+		SSMClient:   &mockSSMClient{secrets: map[string][]byte{}},
+	}
+
+	task := &SecretSyncTask{}
+	if err = task.Set(clients, []byte(taskContent)); err != nil {
+		t.Fatal(err)
+	}
+	err = task.Do()
+	assert.ErrorContains(t, err, "secret not found: /ssm/missing")
 }

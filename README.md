@@ -18,3 +18,4 @@ can perform the following tasks:
   terraform agent and workspace for vault ACL can be set up through
   this task. Refer to https://developer.hashicorp.com/terraform/cloud-docs/workspaces/dynamic-provider-credentials/vault-configuration for details
 - Set up `gcp` type auth; refer to https://developer.hashicorp.com/vault/docs/auth/gcp
+- Create a secret mount in vault and sync the value with the secret source like gcp secret manager

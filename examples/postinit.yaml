@@ -46,3 +46,15 @@
       - "rn-gke-vault-acl-tf-plan@rn-sbx-202307-5d3b.iam.gserviceaccount.com"
       policy_names:
       - reader
+- type: secret_sync
+  task:
+    mount_path: gcp_secret
+    kv_secret:
+      - name: cloud_scylla_1_pass
+        secret_path: examples/cloud_scylla_1_pass.txt
+# - type: secret_sync
+#   task:
+#     mount_path: gcp_secret
+#     kv_secret:
+#       - name: cloud_scylla_1_pass
+#         secret_path: projects/rn-sbx-202307-5d3b/secrets/cloud_scylla_1_pass
