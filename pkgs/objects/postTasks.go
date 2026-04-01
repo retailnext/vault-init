@@ -3,6 +3,8 @@ package objects
 import (
 	"fmt"
 	"log/slog"
+	"strings"
+	"unicode/utf8"
 
 	"gopkg.in/yaml.v3"
 )
@@ -97,4 +99,67 @@ func (a *OIDCAuthTask) Do() (err error) {
 		a.Role.UserClaim,
 		a.Role.TTL,
 	)
+}
+
+type SecretSyncTask struct {
+	MountPath string               `yaml:"mount_path"`
+	KVSecret  []SecretSyncKVSecret `yaml:"kv_secret"`
+	Client    *Clients
+}
+
+type SecretSyncKVSecret struct {
+	Name       string `yaml:"name"`
+	SecretPath string `yaml:"secret_path"`
+}
+
+func (s *SecretSyncTask) Set(c *Clients, task []byte) (err error) {
+	err = yaml.Unmarshal(task, s)
+	if err != nil {
+		return err
+	}
+	s.Client = c
+	if s.Client.VaultClient == nil {
+		return fmt.Errorf("vault client is not initialized")
+	}
+	if s.Client.SSMClient == nil {
+		return fmt.Errorf("ssm client is not initialized")
+	}
+	if strings.TrimSpace(s.MountPath) == "" {
+		return fmt.Errorf("mount_path is required")
+	}
+	if len(s.KVSecret) == 0 {
+		return fmt.Errorf("kv_secret must have at least one entry")
+	}
+	for i, secret := range s.KVSecret {
+		if strings.TrimSpace(secret.Name) == "" {
+			return fmt.Errorf("kv_secret[%d]: name is required", i)
+		}
+		if strings.TrimSpace(secret.SecretPath) == "" {
+			return fmt.Errorf("kv_secret[%d]: secret_path is required", i)
+		}
+	}
+	return nil
+}
+
+func (s *SecretSyncTask) Do() (err error) {
+	slog.Info("create kv", "mount", s.MountPath)
+	err = s.Client.VaultClient.CreateKVMountIfNotExist(s.MountPath)
+	if err != nil {
+		return err
+	}
+	for _, secret := range s.KVSecret {
+		slog.Info("write kv secret", "mount", s.MountPath, "secret", secret.Name, "secret_path", secret.SecretPath)
+		secretValue, err := s.Client.SSMClient.GetValue(secret.SecretPath)
+		if err != nil {
+			return err
+		}
+		if !utf8.Valid(secretValue) {
+			return fmt.Errorf("secret %q at path %q contains non-UTF-8 bytes and cannot be written to Vault as a string value", secret.Name, secret.SecretPath)
+		}
+		err = s.Client.VaultClient.WriteSecret(s.MountPath, secret.Name, string(secretValue))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
