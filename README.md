@@ -19,3 +19,4 @@ can perform the following tasks:
 - Run a `gcp_auth` task to set up `gcp` type auth; refer to https://developer.hashicorp.com/vault/docs/auth/gcp
 - Run a `secret_sync` task to create a Vault KV v2 secret mount and sync secrets from the configured
   secret backend (GCP Secret Manager, AWS Secrets Manager, or a file source) into vault
+
