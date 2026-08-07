@@ -14,6 +14,13 @@
   "lockFileMaintenance": {
     "enabled": true
   },
+  "packageRules": [
+    {
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["minor", "patch", "digest", "pin"],
+      "groupName": "GitHub Actions non-major updates"
+    }
+  ]
   "platformAutomerge": true,
   "postUpdateOptions": [
     "gomodTidy",
