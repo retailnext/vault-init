@@ -3,15 +3,6 @@ module github.com/retailnext/vault-init
 go 1.27.2
 
 require (
-	github.com/aws/aws-sdk-go-v2 v1.47.3
-	github.com/stretchr/testify v1.12.1
-	github.com/testcontainers/testcontainers-go v0.44.0
-	github.com/testcontainers/testcontainers-go/modules/vault v0.44.0
-	github.com/urfave/cli/v3 v3.14.0
-	gopkg.in/yaml.v3 v3.0.1
-)
-
-require (
 	cloud.google.com/go/auth v0.24.1 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.3.0 // indirect
 	cloud.google.com/go/compute/metadata v0.10.0 // indirect
@@ -108,8 +99,14 @@ require (
 )
 
 require (
-	cloud.google.com/go/secretmanager v1.22.0
+	cloud.google.com/go/secretmanager v1.23.0
+	github.com/aws/aws-sdk-go-v2 v1.47.3
 	github.com/aws/aws-sdk-go-v2/config v1.33.9
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.50.4
 	github.com/hashicorp/vault/api v1.23.0
+	github.com/stretchr/testify v1.12.1
+	github.com/testcontainers/testcontainers-go v0.44.0
+	github.com/testcontainers/testcontainers-go/modules/vault v0.44.0
+	github.com/urfave/cli/v3 v3.14.0
+	gopkg.in/yaml.v3 v3.0.1
 )
