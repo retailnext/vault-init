@@ -105,8 +105,8 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.50.4
 	github.com/hashicorp/vault/api v1.23.0
 	github.com/stretchr/testify v1.12.1
-	github.com/testcontainers/testcontainers-go v0.44.0
-	github.com/testcontainers/testcontainers-go/modules/vault v0.44.0
+	github.com/testcontainers/testcontainers-go v0.45.0
+	github.com/testcontainers/testcontainers-go/modules/vault v0.45.0
 	github.com/urfave/cli/v3 v3.14.0
 	gopkg.in/yaml.v3 v3.0.1
 )
